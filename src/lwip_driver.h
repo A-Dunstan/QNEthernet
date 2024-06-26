@@ -20,37 +20,30 @@
 #include "lwip/prot/ethernet.h"
 #include "qnethernet_opts.h"
 
-// Requirements for driver-specific headers:
-// 1. Define MTU
-// 2. Define MAX_FRAME_LEN (including the 4-byte FCS (frame check sequence))
-
 // How to create a driver:
-// 1. Create a header that defines MTU and MAX_FRAME_LEN. Don't forget to use
-//    either `#pragma once` or a #define guard.
-// 2. Create driver source and include lwip_driver.h. Implement all the
+// 1. Create driver source and include lwip_driver.h. Implement all the
 //    `driver_x()` functions. It can be written in either C or C++. If C++ then
 //    make sure to use `extern "C"` around those functions.
-// 3. Adjust the following driver selection logic to define an appropriate macro
+// 2. Adjust the following driver selection logic to define an appropriate macro
 //    (such as INTERNAL_DRIVER_Y) when the desired driver condition
 //    is satisfied.
-// 4. Include your driver header in the correct place in the logic below.
-// 5. In your driver source, gate the whole file(s) on the macro you chose
+// 3. In your driver source, gate the whole file(s) on the macro you chose
 //    above. Of course, test the macro after the lwip_driver.h include.
 //    (Example: INTERNAL_DRIVER_Y)
-// 6. Update lwipopts.h with appropriate values for your driver.
-// 7. Optionally update EthernetClass::hardwareStatus() to return an appropriate
+// 4. Update lwipopts.h with appropriate values for your driver.
+//    Hint: Look for sections gated by macros that start with
+//          `QNETHERNET_DRIVER_`. For example, Ethernet padding, checksum
+//          generation, and checksum checking.
+// 5. Optionally update EthernetClass::hardwareStatus() to return an appropriate
 //    enum value. If no change is made, the default 'EthernetOtherHardware' will
 //    be returned if hardware is found (driver_has_hardware() returns true).
 
 // Select a driver
 #if defined(QNETHERNET_DRIVER_W5500)
-#include "drivers/driver_w5500.h"
 #define QNETHERNET_INTERNAL_DRIVER_W5500
 #elif defined(ARDUINO_TEENSY41)
-#include "drivers/driver_teensy41.h"
 #define QNETHERNET_INTERNAL_DRIVER_TEENSY41
 #else
-#include "drivers/driver_unsupported.h"
 #define QNETHERNET_INTERNAL_DRIVER_UNSUPPORTED
 #endif  // Driver selection
 
@@ -63,6 +56,13 @@ extern "C" {
 // --------------------------------------------------------------------------
 
 // It can be assumed that any parameters passed in will not be NULL.
+
+// Returns the MTU.
+size_t driver_get_mtu();
+
+// Returns the maximum frame length. This includes the 4-byte FCS (frame
+// check sequence).
+size_t driver_get_max_frame_len();
 
 // Returns if the hardware hasn't yet been probed.
 bool driver_is_unknown();
@@ -148,17 +148,6 @@ bool driver_set_mac_address_allowed(const uint8_t mac[ETH_HWADDR_LEN],
 //  Public Interface
 // --------------------------------------------------------------------------
 
-// Returns the MTU.
-inline int enet_get_mtu() {
-  return MTU;
-}
-
-// Returns the maximum frame length. This includes the 4-byte FCS (frame
-// check sequence).
-inline int enet_get_max_frame_len() {
-  return MAX_FRAME_LEN;
-}
-
 // Gets the built-in Ethernet MAC address. This does nothing if 'mac' is NULL.
 //
 // For systems without a built-in address, this should retrieve some default.
@@ -191,9 +180,10 @@ void enet_poll();
 
 #if QNETHERNET_ENABLE_RAW_FRAME_SUPPORT
 // Outputs a raw ethernet frame. This returns false if frame is NULL or if the
-// length is not in the correct range. The proper range is 14-(MAX_FRAME_LEN-8)
-// for non-VLAN frames and 18-(MAX_FRAME_LEN-4) for VLAN frames. Note that these
-// ranges exclude the 4-byte FCS (frame check sequence).
+// length is not in the correct range. The proper range is
+// 14-(driver_get_max_frame_len()-8) for non-VLAN frames and
+// 18-(driver_get_max_frame_len()-4) for VLAN frames. Note that these ranges
+// exclude the 4-byte FCS (frame check sequence).
 //
 // This returns the result of driver_output_frame(), if the frame checks pass.
 bool enet_output_frame(const uint8_t *frame, size_t len);
