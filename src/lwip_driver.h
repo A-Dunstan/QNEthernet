@@ -18,34 +18,21 @@
 #include "lwip/opt.h"
 #include "lwip/pbuf.h"
 #include "lwip/prot/ethernet.h"
-#include "qnethernet_opts.h"
 
 // How to create a driver:
 // 1. Create driver source and include lwip_driver.h. Implement all the
 //    `driver_x()` functions. It can be written in either C or C++. If C++ then
 //    make sure to use `extern "C"` around those functions.
-// 2. Adjust the following driver selection logic to define an appropriate macro
-//    (such as INTERNAL_DRIVER_Y) when the desired driver condition
-//    is satisfied.
+// 2. Adjust the logic at the end of qnethernet_opts.h to define an appropriate
+//    macro (such as INTERNAL_DRIVER_Y) when the desired driver condition
+//    is satisfied. Optionally #include a file that sets any desired options
+//    required for your driver.
 // 3. In your driver source, gate the whole file(s) on the macro you chose
 //    above. Of course, test the macro after the lwip_driver.h include.
 //    (Example: INTERNAL_DRIVER_Y)
-// 4. Update lwipopts.h with appropriate values for your driver.
-//    Hint: Look for sections gated by macros that start with
-//          `QNETHERNET_DRIVER_`. For example, Ethernet padding, checksum
-//          generation, and checksum checking.
-// 5. Optionally update EthernetClass::hardwareStatus() to return an appropriate
+// 4. Optionally update EthernetClass::hardwareStatus() to return an appropriate
 //    enum value. If no change is made, the default 'EthernetOtherHardware' will
 //    be returned if hardware is found (driver_has_hardware() returns true).
-
-// Select a driver
-#if defined(QNETHERNET_DRIVER_W5500)
-#define QNETHERNET_INTERNAL_DRIVER_W5500
-#elif defined(ARDUINO_TEENSY41)
-#define QNETHERNET_INTERNAL_DRIVER_TEENSY41
-#else
-#define QNETHERNET_INTERNAL_DRIVER_UNSUPPORTED
-#endif  // Driver selection
 
 #ifdef __cplusplus
 extern "C" {

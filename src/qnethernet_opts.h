@@ -90,3 +90,13 @@
 #ifndef QNETHERNET_USE_ENTROPY_LIB
 #define QNETHERNET_USE_ENTROPY_LIB 0
 #endif
+
+// Select a driver
+#if defined(QNETHERNET_DRIVER_W5500)
+#define QNETHERNET_INTERNAL_DRIVER_W5500
+#elif defined(ARDUINO_TEENSY41)
+#define QNETHERNET_INTERNAL_DRIVER_TEENSY41
+#include "drivers/driver_teensy41.h"
+#else
+#define QNETHERNET_INTERNAL_DRIVER_UNSUPPORTED
+#endif  // Driver selection
