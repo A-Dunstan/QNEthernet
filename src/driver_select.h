@@ -8,7 +8,9 @@
 
 #include "qnethernet_opts.h"
 
-#if defined(QNETHERNET_DRIVER_W5500)
+#if defined __has_include && __has_include(<qnethernet_external_driver.h>)
+#include <qnethernet_external_driver.h>
+#elif defined(QNETHERNET_DRIVER_W5500)
 #include "drivers/driver_w5500.h"
 #define QNETHERNET_INTERNAL_DRIVER_W5500
 #elif defined(ARDUINO_TEENSY41)
